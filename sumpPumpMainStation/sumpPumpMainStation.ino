@@ -10,6 +10,7 @@
 int msg[1];
 RF24 radio(9, 10);
 const uint64_t pipe = 0xE8E8F0F0E1LL;
+int widelay = 10;
 
 //Cell Phone Numbers
 String cellular1raw = "2178989176";  //We want user to input this without +1
@@ -19,14 +20,6 @@ String number1 = prefix + cellular1raw; //combine prefix and number
 //The cell string is converted to this char array in the setup
 char cellular1[15];
 
-//Float Switches
-/*MOVE THESE TO THE SUMP PUMP MODULE
-const int fs1 = A1; //Float Switch #1
-const int fs2 = A2; //Float Switch #2
-const int fs3 = A3; //Float Switch #3
-const int fs4 = A4; //Float Switch #4
-*/
-
 //Speaker
 const int speakerPin = A5;
 
@@ -35,7 +28,6 @@ const int led_fs1 = A0;
 const int led_fs2 = A1;
 const int led_fs3 = A2;
 const int led_fs4 = A3;
-//const int led_signal=A5;
 
 //Variables
 boolean fs1State = 0;
@@ -59,92 +51,66 @@ int SIGQ = 0;
 int signalPercent = 0;
 
 void setup() {
-  //pinMode(fs1, INPUT);
   pinMode(led_fs1, OUTPUT);
   digitalWrite(led_fs1, LOW);
 
-  //pinMode(fs2, INPUT);
   pinMode(led_fs2, OUTPUT);
   digitalWrite(led_fs2, LOW);
 
-  //pinMode(fs3, INPUT);
   pinMode(led_fs3, OUTPUT);
   digitalWrite(led_fs3, LOW);
 
-  //pinMode(fs4, INPUT);
   pinMode(led_fs4, OUTPUT);
   digitalWrite(led_fs4, LOW);
-
-  //pinMode(led_signal, OUTPUT);
-  //digitalWrite(led_signal, LOW);
 
   //Setup 2.4GHz Transmitter
   Serial.begin(9600);
   radio.begin();
   radio.openReadingPipe(1, pipe);
   radio.startListening();
-
   delay(1000);
   SIM900.begin(9600);
   lcd.begin(16, 2); //set up the LCD's numbers of columns and rows
-  lcd.print("Initializing...");
+  lcd.print(F("Initializing..."));
   //Serial.println("Initializing....");
   lcd.setCursor(0, 1);
-  lcd.print("Sump Guard v0.2");
+  lcd.print(F("Sump Guard v0.3"));
   delay(10000);
   lcd.clear();
   lcd.setCursor(0, 0);
-  lcd.print("Initialization");
+  lcd.print(F("Initialization"));
   lcd.setCursor(0, 1);
-  lcd.print("Complete");
-  //Serial.println("System Initialized");
-
-  /*
-  fs1State = digitalRead(fs1);
-  fs2State = digitalRead(fs2);
-  fs3State = digitalRead(fs3);
-  fs4State = digitalRead(fs4);
-  */
-
-  /*Serial.print("FS1 State: ");
-  Serial.print(fs1State);
-  Serial.print("  FS2 State: ");
-  Serial.print(fs2State);
-  Serial.print("  FS3 State: ");
-  Serial.print(fs3State);
-  Serial.print("  FS4 State: ");
-  Serial.println(fs4State);
-  Serial.println("--------------------------------------------------------------------");*/
+  lcd.print(F("Complete"));
 
   delay(5000);
   lcd.clear();
   lcd.setCursor(0, 0);
-  lcd.print("Checking Signal");
+  lcd.print(F("Checking Signal"));
 
   //convert the cell strings to char which function needs
   number1.toCharArray(cellular1, 15);
   //Serial.println(cellular1); //for debugging
 
   getSignalQuality();
-  //digitalWrite(led_signal, HIGH);
   lcd.setCursor(0, 1);
-  lcd.print("Signal Acquired");
+  lcd.print(F("Signal Acquired"));
   delay(2000);
 
   lcd.clear();
   lcd.setCursor(0, 0);
-  lcd.print("Sending SMS Text");
+  lcd.print(F("Sending SMS Text"));
   lcd.setCursor(0, 1);
   lcd.print(number1);
+
+  //------------TURN ON TO ACTIVATE GSM-----------------
   //sendInitializationSMS();
+  //------------TURN ON TO ACTIVATE GSM-----------------
+
   lcd.clear();
   lcd.setCursor(0, 0);
-  lcd.print("Message Sent!");
+  lcd.print(F("Message Sent!"));
   lcd.setCursor(0, 1);
-  lcd.print("Setup Complete");
-
-
-  //Serial.println("Setup Completed; SMS Initiation Text Sent");
+  lcd.print(F("Setup Complete"));
 
 }
 
@@ -152,40 +118,62 @@ void loop() {
 
   if (radio.available()) {
     radio.read(msg, 1);
-    //Serial.println(msg[0]);
+    Serial.println(msg[0]);
 
     //check for FS1
-    if (msg[0] == 111) {
-      delay(10);
+    if (msg[0] == 11) {
+      delay(widelay);
       fs1State = 1;
     }
 
+    if (msg[0] == 19) {
+      delay(widelay);
+      fs1State = 0;
+    }
+
     //check for FS2
-    if (msg[0] == 222) {
-      delay(10);
+    if (msg[0] == 22) {
+      delay(widelay);
       fs2State = 1;
     }
 
+    if (msg[0] == 29) {
+      delay(widelay);
+      fs2State = 0;
+    }
+
     //check for FS3
-    if (msg[0] == 333) {
-      delay(10);
+    if (msg[0] == 33) {
+      delay(widelay);
       fs3State = 1;
     }
 
+    if (msg[0] == 39) {
+      delay(widelay);
+      fs3State = 0;
+    }
+
     //check for FS4
-    if (msg[0] == 444) {
-      delay(10);
+    if (msg[0] == 44) {
+      delay(widelay);
       fs4State = 1;
+    }
+
+    if (msg[0] == 49) {
+      delay(widelay);
+      fs4State = 0;
     }
 
   }
 
   else {
-    delay(10);
-    fs1State = 0;
-    fs2State = 0;
-    fs3State = 0;
-    fs4State = 0;
+    delay(widelay);
+    //Serial.println(F("No 2.4Ghz Signal"));
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print(F("No Sump Pump"));
+    lcd.setCursor(0, 1);
+    lcd.print(F("Activity"));
   }
 
   if (fs1State != last_fs1State) {
@@ -193,23 +181,23 @@ void loop() {
     if (fs1State != last_fs1State) {
       if (fs1State == HIGH) {
         digitalWrite(led_fs1, HIGH);
-        /*Serial.println("**** FLOAT SWITCH 1 TRIGGERED ****");
-        Serial.println("--------------------------------------------------------------------");*/
+        //Serial.println("FLOAT SWITCH 1 TRIGGERED");
         lcd.clear();
         lcd.setCursor(0, 0);
-        lcd.print("Normal Activity");
+        lcd.print(F("Normal Activity"));
         lcd.setCursor(0, 1);
-        lcd.print("in Progress...");
+        lcd.print(F("in Progress..."));
+        noTone(speakerPin);
       }
       if (fs1State == LOW) {
         digitalWrite(led_fs1, LOW);
-        /*Serial.println("**** FLOAT SWITCH 1 ALL CLEAR ****");
-        Serial.println("--------------------------------------------------------------------");*/
+        //Serial.println("FLOAT SWITCH 1 ALL CLEAR");
         lcd.clear();
         lcd.setCursor(0, 0);
-        lcd.print("* ALL SENSORS *");
+        lcd.print(F("* ALL SENSORS *"));
         lcd.setCursor(0, 1);
-        lcd.print("***  CLEAR  ***");
+        lcd.print(F("***  CLEAR  ***"));
+        noTone(speakerPin);
       }
     }
   }
@@ -219,27 +207,29 @@ void loop() {
     if (fs2State != last_fs2State) {
       if (fs2State == HIGH) {
         digitalWrite(led_fs2, HIGH);
-        /*Serial.println("**** FLOAT SWITCH 2 TRIGGERED ****");
-        Serial.println("--------------------------------------------------------------------");*/
+        //Serial.println("FLOAT SWITCH 2 TRIGGERED");
         lcd.clear();
         lcd.setCursor(0, 0);
-        lcd.print("WARNING...");
+        lcd.print(F("WARNING..."));
         lcd.setCursor(0, 1);
-        lcd.print("SENSOR LEVEL 2");
+        lcd.print(F("SENSOR LEVEL 2"));
         tone(speakerPin, 1000);
+        //------------TURN ON TO ACTIVATE GSM-----------------
         //sendFS2SMS();
+        //------------TURN ON TO ACTIVATE GSM-----------------
       }
       if (fs2State == LOW) {
         digitalWrite(led_fs2, LOW);
-        /*Serial.println("**** FLOAT SWITCH 2 ALL CLEAR ****");
-        Serial.println("--------------------------------------------------------------------");*/
+        //Serial.println("FLOAT SWITCH 2 ALL CLEAR");
         lcd.clear();
         lcd.setCursor(0, 0);
-        lcd.print("SENSOR LEVEL 2");
+        lcd.print(F("SENSOR LEVEL 2"));
         lcd.setCursor(0, 1);
-        lcd.print("ALL CLEAR");
+        lcd.print(F("ALL CLEAR"));
         noTone(speakerPin);
+        //------------TURN ON TO ACTIVATE GSM-----------------
         //sendFS2SMS_clear();
+        //------------TURN ON TO ACTIVATE GSM-----------------
       }
     }
   }
@@ -249,27 +239,29 @@ void loop() {
     if (fs3State != last_fs3State) {
       if (fs3State == HIGH) {
         digitalWrite(led_fs3, HIGH);
-        /*Serial.println("**** FLOAT SWITCH 3 TRIGGERED ****");
-        Serial.println("--------------------------------------------------------------------");*/
+        //Serial.println("FLOAT SWITCH 3 TRIGGERED");
         lcd.clear();
         lcd.setCursor(0, 0);
-        lcd.print("WARNING...");
+        lcd.print(F("WARNING..."));
         lcd.setCursor(0, 1);
-        lcd.print("SENSOR LEVEL 3");
+        lcd.print(F("SENSOR LEVEL 3"));
         tone(speakerPin, 1000);
+        //------------TURN ON TO ACTIVATE GSM-----------------
         //sendFS3SMS();
+        //------------TURN ON TO ACTIVATE GSM-----------------
       }
       if (fs3State == LOW) {
         digitalWrite(led_fs3, LOW);
-        /*Serial.println("**** FLOAT SWITCH 3 ALL CLEAR ****");
-        Serial.println("--------------------------------------------------------------------");*/
+        //Serial.println("FLOAT SWITCH 3 ALL CLEAR");
         lcd.clear();
         lcd.setCursor(0, 0);
-        lcd.print("SENSOR LEVEL 3");
+        lcd.print(F("SENSOR LEVEL 3"));
         lcd.setCursor(0, 1);
-        lcd.print("ALL CLEAR");
+        lcd.print(F("ALL CLEAR"));
         //noTone(speakerPin);
+        //------------TURN ON TO ACTIVATE GSM-----------------
         //sendFS3SMS_clear();
+        //------------TURN ON TO ACTIVATE GSM-----------------
       }
     }
   }
@@ -279,27 +271,28 @@ void loop() {
     if (fs4State != last_fs4State) {
       if (fs4State == HIGH) {
         digitalWrite(led_fs4, HIGH);
-        /*Serial.println("**** FLOAT SWITCH 4 TRIGGERED ****");
-        Serial.println("--------------------------------------------------------------------");*/
+        //Serial.println("FLOAT SWITCH 4 TRIGGERED");
         lcd.clear();
         lcd.setCursor(0, 0);
-        lcd.print("!!!WARNING!!!");
+        lcd.print(F("!!!WARNING!!!"));
         lcd.setCursor(0, 1);
-        lcd.print("SENSOR LEVEL 4");
+        lcd.print(F("SENSOR LEVEL 4"));
         tone(speakerPin, 1000);
+        //------------TURN ON TO ACTIVATE GSM-----------------
         //sendFS4SMS();
+        //------------TURN ON TO ACTIVATE GSM-----------------
       }
       if (fs4State == LOW) {
         digitalWrite(led_fs4, LOW);
-        /*Serial.println("**** FLOAT SWITCH 4 ALL CLEAR ****");
-        Serial.println("--------------------------------------------------------------------");*/
+        //Serial.println("FLOAT SWITCH 4 ALL CLEAR");
         lcd.clear();
         lcd.setCursor(0, 0);
-        lcd.print("SENSOR LEVEL 4");
+        lcd.print(F("SENSOR LEVEL 4"));
         lcd.setCursor(0, 1);
-        lcd.print("ALL CLEAR");
-        //noTone(speakerPin);
+        lcd.print(F("ALL CLEAR"));
+        //------------TURN ON TO ACTIVATE GSM-----------------
         //sendFS4SMS_clear();
+        //------------TURN ON TO ACTIVATE GSM-----------------
       }
     }
   }
@@ -385,7 +378,7 @@ void sendFS4SMS_clear() {
 
 void getSignalQuality() {
   for (int x = 0; x < 20; x++) {
-    SIM900.println("AT+CSQ");  //get the signal Quality
+    SIM900.println(F("AT+CSQ"));  //get the signal Quality
     delay(100);
     int k = 0;
     while (SIM900.available() != 0) {
@@ -422,13 +415,13 @@ void getSignalQuality() {
       break;
     }
     if (x == 20) {
-      Serial.print("The Signal Quality is poor!");
+      //Serial.print("The Signal Quality is poor!");
     }
     if (SIGQ < 10) {
       //Serial.print("The Signal Quality is poor!");
       lcd.clear();
       lcd.setCursor(0, 0);
-      lcd.print("NO CELL SIGNAL!");
+      lcd.print(F("NO CELL SIGNAL!"));
     }
   }
 }
