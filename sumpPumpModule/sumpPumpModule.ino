@@ -1,6 +1,10 @@
 #include <SPI.h>
 #include <nRF24L01.h>
 #include <RF24.h>
+#include <avr/wdt.h>
+#include <Time.h>
+#include <TimeAlarms.h>
+
 int msg[1];
 RF24 radio(9, 10);
 const uint64_t pipe = 0xE8E8F0F0E1LL;
@@ -20,6 +24,8 @@ int widelay = 0;
 
 
 void setup() {
+   setTime(0,0,0,1,1,2015);
+  Alarm.timerRepeat(28800,softwareReboot);
   Serial.begin(9600);
   radio.begin();
   //radio.setRetries(15, 15);
@@ -36,6 +42,7 @@ void loop() {
   //FS1 Switch
   if (fs1State == LOW) {
     delay(widelay);
+    Alarm.delay(0);
     msg[0] = 11;
     radio.write(msg, 1);
     Serial.println(msg[0]);
@@ -43,6 +50,7 @@ void loop() {
 
   if (fs1State == HIGH) {
     delay(widelay);
+    Alarm.delay(0);
     msg[0] = 19;
     radio.write(msg, 1);
     Serial.println(msg[0]);
@@ -51,6 +59,7 @@ void loop() {
   //FS2 Switch
   if (fs2State == LOW) {
     delay(widelay);
+    Alarm.delay(0);
     msg[0] = 22;
     radio.write(msg, 1);
     Serial.println(msg[0]);
@@ -58,6 +67,7 @@ void loop() {
 
   if (fs2State == HIGH) {
     delay(widelay);
+    Alarm.delay(0);
     msg[0] = 29;
     radio.write(msg, 1);
     Serial.println(msg[0]);
@@ -66,6 +76,7 @@ void loop() {
   //FS3 Switch
   if (fs3State == LOW) {
     delay(widelay);
+    Alarm.delay(0);
     msg[0] = 33;
     radio.write(msg, 1);
     Serial.println(msg[0]);
@@ -73,6 +84,7 @@ void loop() {
 
   if (fs3State == HIGH) {
     delay(widelay);
+    Alarm.delay(0);
     msg[0] = 39;
     radio.write(msg, 1);
     Serial.println(msg[0]);
@@ -81,6 +93,7 @@ void loop() {
   //FS4 Switch
   if (fs4State == LOW) {
     delay(widelay);
+    Alarm.delay(0);
     msg[0] = 44;
     radio.write(msg, 1);
     Serial.println(msg[0]);
@@ -88,11 +101,18 @@ void loop() {
 
   if (fs4State == HIGH) {
     delay(widelay);
+    Alarm.delay(0);
     msg[0] = 49;
     radio.write(msg, 1);
     Serial.println(msg[0]);
   }
 
 
+}
+
+void softwareReboot() {
+  wdt_enable(WDTO_15MS);
+  while (1) {
+  }
 }
 

@@ -5,6 +5,8 @@
 #include <SPI.h>
 #include "nRF24L01.h"
 #include "RF24.h"
+#include <Time.h>
+#include <TimeAlarms.h>
 
 //2.4GHz Transmitter Settings (nRF24L01 +2.4GHz)
 int msg[1];
@@ -39,6 +41,8 @@ boolean last_fs3State = 0;
 boolean fs4State = 0;
 boolean last_fs4State = 0;
 
+int fs1_count = 0;
+
 // initialize the LCD library with the numbers of the interface pins
 LiquidCrystal lcd(7, 6, 5, 4, 3, 2);
 
@@ -51,6 +55,10 @@ int SIGQ = 0;
 int signalPercent = 0;
 
 void setup() {
+
+  setTime(8, 05, 0, 1, 1, 2015); //set time to 9:16:00, Jan 1, 2015
+  Alarm.alarmRepeat(8, 0, 0, dailyAlarm); //8:00:00 using dailyAlarm function
+
   pinMode(led_fs1, OUTPUT);
   digitalWrite(led_fs1, LOW);
 
@@ -74,7 +82,7 @@ void setup() {
   lcd.print(F("Initializing..."));
   //Serial.println("Initializing....");
   lcd.setCursor(0, 1);
-  lcd.print(F("Sump Guard v0.3"));
+  lcd.print(F("Sump Guard v0.4"));
   delay(10000);
   lcd.clear();
   lcd.setCursor(0, 0);
@@ -103,7 +111,7 @@ void setup() {
   lcd.print(number1);
 
   //------------TURN ON TO ACTIVATE GSM-----------------
-  //sendInitializationSMS();
+  sendInitializationSMS();
   //------------TURN ON TO ACTIVATE GSM-----------------
 
   lcd.clear();
@@ -118,49 +126,57 @@ void loop() {
 
   if (radio.available()) {
     radio.read(msg, 1);
-    Serial.println(msg[0]);
+    //Serial.println(msg[0]);
 
     //check for FS1
     if (msg[0] == 11) {
       delay(widelay);
+      Alarm.delay(0);
       fs1State = 1;
     }
 
     if (msg[0] == 19) {
       delay(widelay);
+      Alarm.delay(0);
       fs1State = 0;
     }
 
     //check for FS2
     if (msg[0] == 22) {
       delay(widelay);
+      Alarm.delay(0);
       fs2State = 1;
     }
 
     if (msg[0] == 29) {
       delay(widelay);
+      Alarm.delay(0);
       fs2State = 0;
     }
 
     //check for FS3
     if (msg[0] == 33) {
       delay(widelay);
+      Alarm.delay(0);
       fs3State = 1;
     }
 
     if (msg[0] == 39) {
       delay(widelay);
+      Alarm.delay(0);
       fs3State = 0;
     }
 
     //check for FS4
     if (msg[0] == 44) {
       delay(widelay);
+      Alarm.delay(0);
       fs4State = 1;
     }
 
     if (msg[0] == 49) {
       delay(widelay);
+      Alarm.delay(0);
       fs4State = 0;
     }
 
@@ -168,16 +184,20 @@ void loop() {
 
   else {
     delay(widelay);
+    Alarm.delay(0);
     //Serial.println(F("No 2.4Ghz Signal"));
     lcd.clear();
     lcd.setCursor(0, 0);
-    lcd.print(F("No Sump Pump"));
+    //lcd.print(F("* ALL SENSORS *"));
+    lcd.print(fs1_count);
     lcd.setCursor(0, 1);
-    lcd.print(F("Activity"));
+    //lcd.print(F("***  CLEAR  ***"));
+    lcd.print(F("Pump Iterations"));
   }
 
   if (fs1State != last_fs1State) {
     delay(1000);
+    Alarm.delay(0);
     if (fs1State != last_fs1State) {
       if (fs1State == HIGH) {
         digitalWrite(led_fs1, HIGH);
@@ -188,22 +208,28 @@ void loop() {
         lcd.setCursor(0, 1);
         lcd.print(F("in Progress..."));
         noTone(speakerPin);
+        fs1_count = fs1_count + 1;
       }
       if (fs1State == LOW) {
         digitalWrite(led_fs1, LOW);
         //Serial.println("FLOAT SWITCH 1 ALL CLEAR");
         lcd.clear();
         lcd.setCursor(0, 0);
-        lcd.print(F("* ALL SENSORS *"));
+        //lcd.print(F("* ALL SENSORS *"));
+        lcd.print(fs1_count);
         lcd.setCursor(0, 1);
-        lcd.print(F("***  CLEAR  ***"));
+        //lcd.print(F("***  CLEAR  ***"));
+        lcd.print(F("Pump Iterations"));
         noTone(speakerPin);
+        //Serial.print(F("FS1 Iterations"));
+        //Serial.println(fs1_count);
       }
     }
   }
 
   if (fs2State != last_fs2State) {
     delay(1000);
+    Alarm.delay(0);
     if (fs2State != last_fs2State) {
       if (fs2State == HIGH) {
         digitalWrite(led_fs2, HIGH);
@@ -215,7 +241,7 @@ void loop() {
         lcd.print(F("SENSOR LEVEL 2"));
         tone(speakerPin, 1000);
         //------------TURN ON TO ACTIVATE GSM-----------------
-        //sendFS2SMS();
+        sendFS2SMS();
         //------------TURN ON TO ACTIVATE GSM-----------------
       }
       if (fs2State == LOW) {
@@ -228,7 +254,7 @@ void loop() {
         lcd.print(F("ALL CLEAR"));
         noTone(speakerPin);
         //------------TURN ON TO ACTIVATE GSM-----------------
-        //sendFS2SMS_clear();
+        sendFS2SMS_clear();
         //------------TURN ON TO ACTIVATE GSM-----------------
       }
     }
@@ -236,6 +262,7 @@ void loop() {
 
   if (fs3State != last_fs3State) {
     delay(1000);
+    Alarm.delay(0);
     if (fs3State != last_fs3State) {
       if (fs3State == HIGH) {
         digitalWrite(led_fs3, HIGH);
@@ -247,7 +274,7 @@ void loop() {
         lcd.print(F("SENSOR LEVEL 3"));
         tone(speakerPin, 1000);
         //------------TURN ON TO ACTIVATE GSM-----------------
-        //sendFS3SMS();
+        sendFS3SMS();
         //------------TURN ON TO ACTIVATE GSM-----------------
       }
       if (fs3State == LOW) {
@@ -260,7 +287,7 @@ void loop() {
         lcd.print(F("ALL CLEAR"));
         //noTone(speakerPin);
         //------------TURN ON TO ACTIVATE GSM-----------------
-        //sendFS3SMS_clear();
+        sendFS3SMS_clear();
         //------------TURN ON TO ACTIVATE GSM-----------------
       }
     }
@@ -268,6 +295,7 @@ void loop() {
 
   if (fs4State != last_fs4State) {
     delay(1000);
+    Alarm.delay(0);
     if (fs4State != last_fs4State) {
       if (fs4State == HIGH) {
         digitalWrite(led_fs4, HIGH);
@@ -279,7 +307,7 @@ void loop() {
         lcd.print(F("SENSOR LEVEL 4"));
         tone(speakerPin, 1000);
         //------------TURN ON TO ACTIVATE GSM-----------------
-        //sendFS4SMS();
+        sendFS4SMS();
         //------------TURN ON TO ACTIVATE GSM-----------------
       }
       if (fs4State == LOW) {
@@ -291,7 +319,7 @@ void loop() {
         lcd.setCursor(0, 1);
         lcd.print(F("ALL CLEAR"));
         //------------TURN ON TO ACTIVATE GSM-----------------
-        //sendFS4SMS_clear();
+        sendFS4SMS_clear();
         //------------TURN ON TO ACTIVATE GSM-----------------
       }
     }
@@ -425,3 +453,21 @@ void getSignalQuality() {
     }
   }
 }
+
+void dailyAlarm() {
+  //Serial.print(fs1_count);
+  //Serial.println(F(" Pump Iterations"));
+  cell.begin(9600);
+  cell.Verbose(true);
+  cell.Boot();
+  cell.FwdSMS2Serial();
+  cell.Rcpt(cellular1);
+  String stringOne = "Daily Sump Pump Iterations: ";
+  String stringTwo = stringOne += fs1_count;
+  char dailyMessage[42];
+  stringTwo.toCharArray(dailyMessage, 42);
+  cell.Message(dailyMessage);
+  cell.SendSMS();
+  fs1_count = 0; //reset daily iteration count
+}
+
