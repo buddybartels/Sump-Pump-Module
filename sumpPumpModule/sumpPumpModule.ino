@@ -1,13 +1,33 @@
 #include <SPI.h>
-#include <nRF24L01.h>
+//#include <nRF24L01.h>
 #include <RF24.h>
 #include <avr/wdt.h>
 #include <Time.h>
 #include <TimeAlarms.h>
 
+byte addresses[][6] = {"1Node", "2Node"};
 int msg[1];
 RF24 radio(9, 10);
-const uint64_t pipe = 0xE8E8F0F0E1LL;
+//const uint64_t pipe = 0xE8E8F0F0E1LL;
+
+/****************** User Config ***************************/
+/***      Set this radio as radio number 0 or 1         ***/
+//1-->sump module; 0-->main station
+bool radioNumber = 1;
+
+// Used to control whether this node is sending or receiving
+//1-->sump module; 0-->main station
+bool role = 1;
+
+/**
+* Create a data structure for transmitting and receiving data
+* This allows many variables to be easily sent and received in a single transmission
+* See http://www.cplusplus.com/doc/tutorial/structures/
+*/
+/*struct dataStruct {
+  unsigned long _micros;
+  float value;
+} myData;*/
 
 //Float Switches
 const int fs1 = A1; //Float Switch #1
@@ -24,16 +44,35 @@ int widelay = 0;
 
 
 void setup() {
-   setTime(0,0,0,1,1,2015);
-  Alarm.timerRepeat(28800,softwareReboot);
+  setTime(0, 0, 0, 1, 1, 2015);
+  Alarm.timerRepeat(28800, softwareReboot);
   Serial.begin(9600);
   radio.begin();
   //radio.setRetries(15, 15);
-  radio.openWritingPipe(pipe);
-  radio.stopListening();
+  //radio.openWritingPipe(pipe);
+  //radio.stopListening();
+
+  // Set the PA Level low to prevent power supply related issues since this is a
+  // getting_started sketch, and the likelihood of close proximity of the devices. RF24_PA_MAX is default.
+  radio.setPALevel(RF24_PA_MAX);
+
+  // Open a writing and reading pipe on each radio, with opposite addresses
+  if (radioNumber) {
+    radio.openWritingPipe(addresses[1]);
+    radio.openReadingPipe(1, addresses[0]);
+  } else {
+    radio.openWritingPipe(addresses[0]);
+    radio.openReadingPipe(1, addresses[1]);
+  }
+
+  //myData.value = 0;
+  // Start the radio listening for data
+  radio.startListening();
 }
 
 void loop() {
+  radio.stopListening();
+  
   fs1State = digitalRead(fs1);
   fs2State = digitalRead(fs2);
   fs3State = digitalRead(fs3);
@@ -106,6 +145,8 @@ void loop() {
     radio.write(msg, 1);
     Serial.println(msg[0]);
   }
+
+  delay(1000);
 
 
 }

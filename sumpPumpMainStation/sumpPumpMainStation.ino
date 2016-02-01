@@ -3,16 +3,27 @@
 #include <SoftwareSerial.h>
 #include <LiquidCrystal.h>
 #include <SPI.h>
-#include "nRF24L01.h"
+//#include "nRF24L01.h"
 #include "RF24.h"
 #include <Time.h>
 #include <TimeAlarms.h>
 
+byte addresses[][6] = {"1Node", "2Node"};
+
 //2.4GHz Transmitter Settings (nRF24L01 +2.4GHz)
 int msg[1];
 RF24 radio(9, 10);
-const uint64_t pipe = 0xE8E8F0F0E1LL;
+//const uint64_t pipe = 0xE8E8F0F0E1LL;
 int widelay = 10;
+
+/****************** User Config ***************************/
+/***      Set this radio as radio number 0 or 1         ***/
+//1-->sump module; 0-->main station
+bool radioNumber = 0;
+
+// Used to control whether this node is sending or receiving
+//1-->sump module; 0-->main station
+bool role = 0;
 
 //Cell Phone Numbers
 String cellular1raw = "2178989176";  //We want user to input this without +1
@@ -74,15 +85,30 @@ void setup() {
   //Setup 2.4GHz Transmitter
   Serial.begin(9600);
   radio.begin();
-  radio.openReadingPipe(1, pipe);
+  //radio.openReadingPipe(1, pipe);
+
+  // Set the PA Level low to prevent power supply related issues since this is a
+  // getting_started sketch, and the likelihood of close proximity of the devices. RF24_PA_MAX is default.
+  radio.setPALevel(RF24_PA_MAX);
+
+  // Open a writing and reading pipe on each radio, with opposite addresses
+  if (radioNumber) {
+    radio.openWritingPipe(addresses[1]);
+    radio.openReadingPipe(1, addresses[0]);
+  } else {
+    radio.openWritingPipe(addresses[0]);
+    radio.openReadingPipe(1, addresses[1]);
+  }
+
   radio.startListening();
+
   delay(1000);
   SIM900.begin(9600);
   lcd.begin(16, 2); //set up the LCD's numbers of columns and rows
   lcd.print(F("Initializing..."));
   //Serial.println("Initializing....");
   lcd.setCursor(0, 1);
-  lcd.print(F("Sump Guard v0.4"));
+  lcd.print(F("Sump Guard v0.5"));
   delay(10000);
   lcd.clear();
   lcd.setCursor(0, 0);
@@ -123,64 +149,70 @@ void setup() {
 }
 
 void loop() {
+  radio.startListening();
 
   if (radio.available()) {
-    radio.read(msg, 1);
-    //Serial.println(msg[0]);
 
-    //check for FS1
-    if (msg[0] == 11) {
-      delay(widelay);
-      Alarm.delay(0);
-      fs1State = 1;
+    while (radio.available()) {
+      radio.read(msg, 1);
+      Serial.println(msg[0]);
     }
-
-    if (msg[0] == 19) {
-      delay(widelay);
-      Alarm.delay(0);
-      fs1State = 0;
-    }
-
-    //check for FS2
-    if (msg[0] == 22) {
-      delay(widelay);
-      Alarm.delay(0);
-      fs2State = 1;
-    }
-
-    if (msg[0] == 29) {
-      delay(widelay);
-      Alarm.delay(0);
-      fs2State = 0;
-    }
-
-    //check for FS3
-    if (msg[0] == 33) {
-      delay(widelay);
-      Alarm.delay(0);
-      fs3State = 1;
-    }
-
-    if (msg[0] == 39) {
-      delay(widelay);
-      Alarm.delay(0);
-      fs3State = 0;
-    }
-
-    //check for FS4
-    if (msg[0] == 44) {
-      delay(widelay);
-      Alarm.delay(0);
-      fs4State = 1;
-    }
-
-    if (msg[0] == 49) {
-      delay(widelay);
-      Alarm.delay(0);
-      fs4State = 0;
-    }
-
   }
+
+
+  //check for FS1
+  if (msg[0] == 11) {
+    delay(widelay);
+    Alarm.delay(0);
+    fs1State = 1;
+  }
+
+  if (msg[0] == 19) {
+    delay(widelay);
+    Alarm.delay(0);
+    fs1State = 0;
+  }
+
+  //check for FS2
+  if (msg[0] == 22) {
+    delay(widelay);
+    Alarm.delay(0);
+    fs2State = 1;
+  }
+
+  if (msg[0] == 29) {
+    delay(widelay);
+    Alarm.delay(0);
+    fs2State = 0;
+  }
+
+  //check for FS3
+  if (msg[0] == 33) {
+    delay(widelay);
+    Alarm.delay(0);
+    fs3State = 1;
+  }
+
+  if (msg[0] == 39) {
+    delay(widelay);
+    Alarm.delay(0);
+    fs3State = 0;
+  }
+
+  //check for FS4
+  if (msg[0] == 44) {
+    delay(widelay);
+    Alarm.delay(0);
+    fs4State = 1;
+  }
+
+  if (msg[0] == 49) {
+    delay(widelay);
+    Alarm.delay(0);
+    fs4State = 0;
+  }
+
+
 
   else {
     delay(widelay);
