@@ -156,63 +156,60 @@ void loop() {
     while (radio.available()) {
       radio.read(msg, 1);
       Serial.println(msg[0]);
+
+      //check for FS1
+      if (msg[0] == 11) {
+        delay(widelay);
+        Alarm.delay(0);
+        fs1State = 1;
+      }
+
+      if (msg[0] == 19) {
+        delay(widelay);
+        Alarm.delay(0);
+        fs1State = 0;
+      }
+
+      //check for FS2
+      if (msg[0] == 22) {
+        delay(widelay);
+        Alarm.delay(0);
+        fs2State = 1;
+      }
+
+      if (msg[0] == 29) {
+        delay(widelay);
+        Alarm.delay(0);
+        fs2State = 0;
+      }
+
+      //check for FS3
+      if (msg[0] == 33) {
+        delay(widelay);
+        Alarm.delay(0);
+        fs3State = 1;
+      }
+
+      if (msg[0] == 39) {
+        delay(widelay);
+        Alarm.delay(0);
+        fs3State = 0;
+      }
+
+      //check for FS4
+      if (msg[0] == 44) {
+        delay(widelay);
+        Alarm.delay(0);
+        fs4State = 1;
+      }
+
+      if (msg[0] == 49) {
+        delay(widelay);
+        Alarm.delay(0);
+        fs4State = 0;
+      }
     }
   }
-
-
-  //check for FS1
-  if (msg[0] == 11) {
-    delay(widelay);
-    Alarm.delay(0);
-    fs1State = 1;
-  }
-
-  if (msg[0] == 19) {
-    delay(widelay);
-    Alarm.delay(0);
-    fs1State = 0;
-  }
-
-  //check for FS2
-  if (msg[0] == 22) {
-    delay(widelay);
-    Alarm.delay(0);
-    fs2State = 1;
-  }
-
-  if (msg[0] == 29) {
-    delay(widelay);
-    Alarm.delay(0);
-    fs2State = 0;
-  }
-
-  //check for FS3
-  if (msg[0] == 33) {
-    delay(widelay);
-    Alarm.delay(0);
-    fs3State = 1;
-  }
-
-  if (msg[0] == 39) {
-    delay(widelay);
-    Alarm.delay(0);
-    fs3State = 0;
-  }
-
-  //check for FS4
-  if (msg[0] == 44) {
-    delay(widelay);
-    Alarm.delay(0);
-    fs4State = 1;
-  }
-
-  if (msg[0] == 49) {
-    delay(widelay);
-    Alarm.delay(0);
-    fs4State = 0;
-  }
-
-
 
   else {
     delay(widelay);
@@ -226,6 +223,15 @@ void loop() {
     //lcd.print(F("***  CLEAR  ***"));
     lcd.print(F("Pump Iterations"));
   }
+
+  Serial.print("fs1State = ");
+  Serial.println(fs1State);
+  Serial.print("fs2State = ");
+  Serial.println(fs2State);
+  Serial.print("fs3State = ");
+  Serial.println(fs3State);
+  Serial.print("fs4State = ");
+  Serial.println(fs4State);
 
   if (fs1State != last_fs1State) {
     delay(1000);
